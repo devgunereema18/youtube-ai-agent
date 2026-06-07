@@ -1,0 +1,11 @@
+.env
+youtube_token.json
+youtube_credentials.json
+output/
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+.DS_Store
+Thumbs.db
