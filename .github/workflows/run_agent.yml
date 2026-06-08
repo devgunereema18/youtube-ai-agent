@@ -76,14 +76,22 @@ jobs:
               print(f'  {k}: {status}')
           "
 
+      - name: Create YouTube token file
+        run: |
+          if [ -n "${{ secrets.YOUTUBE_TOKEN_JSON }}" ]; then
+            echo '${{ secrets.YOUTUBE_TOKEN_JSON }}' > youtube_token.json
+            echo "YouTube token file created."
+          else
+            echo "No YouTube token. Will skip upload."
+          fi
+
       - name: Run AI Video Agent Pipeline
         run: |
           python main.py \
             --topic "${{ inputs.topic }}" \
             --style "${{ inputs.style }}" \
             --niche "${{ inputs.niche }}" \
-            --privacy "${{ inputs.privacy }}" \
-            --no-upload
+            --privacy "${{ inputs.privacy }}"
 
       - name: Upload pipeline results
         if: always()
