@@ -4,13 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       topic:
-        description: 'Video topic'
+        description: "Video topic"
         required: true
-        default: 'Artificial Intelligence for Beginners'
+        default: "Artificial Intelligence for Beginners"
+        type: string
       style:
-        description: 'Video style'
+        description: "Video style"
         required: true
-        default: 'educational'
+        default: "educational"
         type: choice
         options:
           - educational
@@ -18,18 +19,19 @@ on:
           - tutorial
           - review
       privacy:
-        description: 'YouTube privacy status'
+        description: "YouTube privacy status"
         required: true
-        default: 'private'
+        default: "private"
         type: choice
         options:
           - private
           - unlisted
           - public
       niche:
-        description: 'Content niche'
+        description: "Content niche"
         required: false
-        default: 'technology'
+        default: "technology"
+        type: string
 
 jobs:
   create-video:
@@ -43,42 +45,22 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Create .env file from secrets
-        env:
-          VIDIQ_API_KEY: ${{ secrets.VIDIQ_API_KEY }}
-          HEYGEN_API_KEY: ${{ secrets.HEYGEN_API_KEY }}
-          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
-          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          HEYGEN_AVATAR_ID: ${{ secrets.HEYGEN_AVATAR_ID }}
-          HEYGEN_VOICE_ID: ${{ secrets.HEYGEN_VOICE_ID }}
-          INPUT_PRIVACY: ${{ github.event.inputs.privacy }}
+      - name: Create environment file
         run: |
-          echo "VIDIQ_API_KEY=${VIDIQ_API_KEY}" > .env
-          echo "HEYGEN_API_KEY=${HEYGEN_API_KEY}" >> .env
-          echo "YOUTUBE_CLIENT_ID=${YOUTUBE_CLIENT_ID}" >> .env
-          echo "YOUTUBE_CLIENT_SECRET=${YOUTUBE_CLIENT_SECRET}" >> .env
-          echo "OPENAI_API_KEY=${OPENAI_API_KEY}" >> .env
-          echo "HEYGEN_AVATAR_ID=${HEYGEN_AVATAR_ID:-default}" >> .env
-          echo "HEYGEN_VOICE_ID=${HEYGEN_VOICE_ID:-default}" >> .env
+          echo "VIDIQ_API_KEY=${{ secrets.VIDIQ_API_KEY }}" > .env
+          echo "HEYGEN_API_KEY=${{ secrets.HEYGEN_API_KEY }}" >> .env
+          echo "YOUTUBE_CLIENT_ID=${{ secrets.YOUTUBE_CLIENT_ID }}" >> .env
+          echo "YOUTUBE_CLIENT_SECRET=${{ secrets.YOUTUBE_CLIENT_SECRET }}" >> .env
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
+          echo "HEYGEN_AVATAR_ID=default" >> .env
+          echo "HEYGEN_VOICE_ID=default" >> .env
           echo "YOUTUBE_CATEGORY_ID=22" >> .env
-          echo "YOUTUBE_DEFAULT_PRIVACY=${INPUT_PRIVACY:-private}" >> .env
-
-      - name: Create YouTube token from secret
-        env:
-          YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON }}
-        run: |
-          if [ -n "${YOUTUBE_TOKEN_JSON}" ]; then
-            echo "${YOUTUBE_TOKEN_JSON}" > youtube_token.json
-            echo "YouTube token file created."
-          else
-            echo "No YouTube token secret found. Skipping."
-          fi
+          echo "YOUTUBE_DEFAULT_PRIVACY=${{ inputs.privacy }}" >> .env
 
       - name: Validate configuration
         run: python main.py --validate
@@ -86,10 +68,10 @@ jobs:
       - name: Run AI Video Agent Pipeline
         run: |
           python main.py \
-            --topic "${{ github.event.inputs.topic }}" \
-            --style "${{ github.event.inputs.style }}" \
-            --niche "${{ github.event.inputs.niche }}" \
-            --privacy "${{ github.event.inputs.privacy }}"
+            --topic "${{ inputs.topic }}" \
+            --style "${{ inputs.style }}" \
+            --niche "${{ inputs.niche }}" \
+            --privacy "${{ inputs.privacy }}"
 
       - name: Upload pipeline results
         if: always()
