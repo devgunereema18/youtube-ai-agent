@@ -1,0 +1,91 @@
+name: AI Video Agent - Create & Upload Video
+
+on:
+  # Run manually from GitHub Actions tab
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: 'Video topic'
+        required: true
+        default: 'Artificial Intelligence for Beginners'
+      style:
+        description: 'Video style'
+        required: true
+        default: 'educational'
+        type: choice
+        options:
+          - educational
+          - entertaining
+          - tutorial
+          - review
+      privacy:
+        description: 'YouTube privacy status'
+        required: true
+        default: 'private'
+        type: choice
+        options:
+          - private
+          - unlisted
+          - public
+      niche:
+        description: 'Content niche'
+        required: false
+        default: 'technology'
+
+  # Optional: Run on schedule (uncomment to auto-post daily)
+  # schedule:
+  #   - cron: '0 9 * * *'  # Every day at 9:00 AM UTC
+
+jobs:
+  create-video:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create .env file from secrets
+        run: |
+          cat << EOF > .env
+          VIDIQ_API_KEY=${{ secrets.VIDIQ_API_KEY }}
+          HEYGEN_API_KEY=${{ secrets.HEYGEN_API_KEY }}
+          YOUTUBE_CLIENT_ID=${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET=${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          HEYGEN_AVATAR_ID=${{ secrets.HEYGEN_AVATAR_ID || 'default' }}
+          HEYGEN_VOICE_ID=${{ secrets.HEYGEN_VOICE_ID || 'default' }}
+          YOUTUBE_CATEGORY_ID=22
+          YOUTUBE_DEFAULT_PRIVACY=${{ github.event.inputs.privacy }}
+          EOF
+
+      - name: Create YouTube token from secret
+        if: ${{ secrets.YOUTUBE_TOKEN_JSON != '' }}
+        run: echo '${{ secrets.YOUTUBE_TOKEN_JSON }}' > youtube_token.json
+
+      - name: Validate configuration
+        run: python main.py --validate
+
+      - name: Run AI Video Agent Pipeline
+        run: |
+          python main.py \
+            --topic "${{ github.event.inputs.topic || 'AI Technology Trends' }}" \
+            --style "${{ github.event.inputs.style || 'educational' }}" \
+            --niche "${{ github.event.inputs.niche || 'technology' }}" \
+            --privacy "${{ github.event.inputs.privacy || 'private' }}"
+
+      - name: Upload pipeline results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-results
+          path: output/
+          retention-days: 30
