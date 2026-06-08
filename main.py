@@ -99,7 +99,7 @@ Examples:
         sys.exit(1)
 
     try:
-        Config.validate()
+        Config.validate(require_youtube=not args.no_upload)
     except EnvironmentError as e:
         print(f"Configuration Error:\n{e}")
         print("\nCopy .env.example to .env and fill in your API keys.")

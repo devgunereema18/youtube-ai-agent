@@ -38,17 +38,18 @@ class Config:
     MAX_POLL_ATTEMPTS = 120
 
     @classmethod
-    def validate(cls):
+    def validate(cls, require_youtube=True):
         """Validate that all required API keys are configured."""
         errors = []
         if not cls.VIDIQ_API_KEY:
             errors.append("VIDIQ_API_KEY is not set")
         if not cls.HEYGEN_API_KEY:
             errors.append("HEYGEN_API_KEY is not set")
-        if not cls.YOUTUBE_CLIENT_ID:
-            errors.append("YOUTUBE_CLIENT_ID is not set")
-        if not cls.YOUTUBE_CLIENT_SECRET:
-            errors.append("YOUTUBE_CLIENT_SECRET is not set")
+        if require_youtube:
+            if not cls.YOUTUBE_CLIENT_ID:
+                errors.append("YOUTUBE_CLIENT_ID is not set")
+            if not cls.YOUTUBE_CLIENT_SECRET:
+                errors.append("YOUTUBE_CLIENT_SECRET is not set")
         if errors:
             raise EnvironmentError(
                 "Missing required configuration:\n" + "\n".join(f"  - {e}" for e in errors)

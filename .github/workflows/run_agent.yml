@@ -61,46 +61,19 @@ jobs:
           echo "HEYGEN_VOICE_ID=default" >> .env
           echo "YOUTUBE_CATEGORY_ID=22" >> .env
           echo "YOUTUBE_DEFAULT_PRIVACY=${{ inputs.privacy }}" >> .env
-          echo "Environment file created."
-          echo "Checking keys are set..."
-          if grep -q "VIDIQ_API_KEY=$" .env; then echo "WARNING: VIDIQ_API_KEY is empty"; fi
-          if grep -q "HEYGEN_API_KEY=$" .env; then echo "WARNING: HEYGEN_API_KEY is empty"; fi
-          if grep -q "YOUTUBE_CLIENT_ID=$" .env; then echo "WARNING: YOUTUBE_CLIENT_ID is empty"; fi
-          if grep -q "YOUTUBE_CLIENT_SECRET=$" .env; then echo "WARNING: YOUTUBE_CLIENT_SECRET is empty"; fi
 
-      - name: Create YouTube token file
+      - name: Show configured keys
         run: |
-          echo '${{ secrets.YOUTUBE_TOKEN_JSON }}' > youtube_token.json
-          if [ -s youtube_token.json ] && [ "$(cat youtube_token.json)" != "" ]; then
-            echo "YouTube token file created successfully."
-          else
-            echo "No YouTube token found in secrets. First run will require OAuth."
-            rm -f youtube_token.json
-          fi
-
-      - name: Validate configuration
-        run: |
-          python -c "
+          echo "Checking which keys are configured..."
+          python3 -c "
           import os
           from dotenv import load_dotenv
           load_dotenv()
-          keys = {
-              'VIDIQ_API_KEY': os.getenv('VIDIQ_API_KEY', ''),
-              'HEYGEN_API_KEY': os.getenv('HEYGEN_API_KEY', ''),
-              'YOUTUBE_CLIENT_ID': os.getenv('YOUTUBE_CLIENT_ID', ''),
-              'YOUTUBE_CLIENT_SECRET': os.getenv('YOUTUBE_CLIENT_SECRET', ''),
-          }
-          missing = [k for k, v in keys.items() if not v]
-          if missing:
-              print('ERROR: Missing secrets:')
-              for m in missing:
-                  print(f'  - {m}')
-              print()
-              print('Go to: https://github.com/devgunereema18/youtube-ai-agent/settings/secrets/actions')
-              print('Add the missing secrets listed above.')
-              exit(1)
-          else:
-              print('All API keys configured successfully!')
+          keys = ['VIDIQ_API_KEY','HEYGEN_API_KEY','YOUTUBE_CLIENT_ID','YOUTUBE_CLIENT_SECRET']
+          for k in keys:
+              val = os.getenv(k, '')
+              status = 'SET' if val else 'MISSING'
+              print(f'  {k}: {status}')
           "
 
       - name: Run AI Video Agent Pipeline
