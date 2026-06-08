@@ -68,7 +68,9 @@ jobs:
           EOF
 
       - name: Create YouTube token from secret
-        if: ${{ secrets.YOUTUBE_TOKEN_JSON != '' }}
+        env:
+          YOUTUBE_TOKEN: ${{ secrets.YOUTUBE_TOKEN_JSON }}
+        if: env.YOUTUBE_TOKEN != ''
         run: echo '${{ secrets.YOUTUBE_TOKEN_JSON }}' > youtube_token.json
 
       - name: Validate configuration
