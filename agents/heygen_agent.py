@@ -97,6 +97,11 @@ class HeyGenAgent:
             else:
                 return {"error": "No voices available. Check your HeyGen API key."}
 
+        # Truncate script if too long (HeyGen has limits)
+        if len(script) > 1500:
+            script = script[:1500]
+            print(f"[HeyGen] Script truncated to 1500 characters")
+
         payload = {
             "video_inputs": [{
                 "character": {
@@ -108,7 +113,6 @@ class HeyGenAgent:
                     "type": "text",
                     "input_text": script,
                     "voice_id": voice_id,
-                    "speed": 1.0,
                 },
                 "background": {
                     "type": "color",
@@ -116,17 +120,21 @@ class HeyGenAgent:
                 },
             }],
             "dimension": self._get_dimensions(aspect_ratio),
-            "aspect_ratio": None,
-            "title": title,
         }
 
         try:
             print(f"[HeyGen] Initiating video creation: '{title}'")
+            print(f"[HeyGen] Avatar ID: {avatar_id}")
+            print(f"[HeyGen] Voice ID: {voice_id}")
+            print(f"[HeyGen] Script length: {len(script)} chars")
             response = requests.post(
                 f"{self.base_url}/v2/video/generate",
                 headers=self.headers, json=payload, timeout=60,
             )
-            response.raise_for_status()
+            if response.status_code != 200:
+                error_detail = response.text
+                print(f"[HeyGen] API Error {response.status_code}: {error_detail}")
+                return {"error": f"HeyGen API {response.status_code}: {error_detail}"}
             data = response.json()
             video_id = data.get("data", {}).get("video_id")
             if video_id:
