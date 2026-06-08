@@ -77,6 +77,26 @@ class HeyGenAgent:
         avatar_id = avatar_id or self.avatar_id
         voice_id = voice_id or self.voice_id
 
+        # If avatar_id is "default", fetch the first available avatar
+        if avatar_id == "default":
+            print("[HeyGen] Fetching available avatars...")
+            avatars = self.list_avatars()
+            if avatars:
+                avatar_id = avatars[0].get("avatar_id", "")
+                print(f"[HeyGen] Using avatar: {avatar_id}")
+            else:
+                return {"error": "No avatars available. Check your HeyGen API key."}
+
+        # If voice_id is "default", fetch the first available voice
+        if voice_id == "default":
+            print("[HeyGen] Fetching available voices...")
+            voices = self.list_voices()
+            if voices:
+                voice_id = voices[0].get("voice_id", "")
+                print(f"[HeyGen] Using voice: {voice_id}")
+            else:
+                return {"error": "No voices available. Check your HeyGen API key."}
+
         payload = {
             "video_inputs": [{
                 "character": {

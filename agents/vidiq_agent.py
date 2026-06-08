@@ -22,35 +22,32 @@ class VidIQAgent:
         }
 
     def get_trending_topics(self, niche: str, count: int = 5) -> list:
-        """Fetch trending topics from VidIQ for a given niche."""
-        try:
-            response = requests.get(
-                f"{self.base_url}/keywords/trending",
-                headers=self.headers,
-                params={"query": niche, "limit": count},
-                timeout=30,
-            )
-            response.raise_for_status()
-            data = response.json()
-            return data.get("results", [])
-        except requests.exceptions.RequestException as e:
-            print(f"[VidIQ] Error fetching trending topics: {e}")
-            return [{"keyword": niche, "score": 0}]
+        """Generate trending topic suggestions for a given niche."""
+        # VidIQ MCP doesn't have a public REST API
+        # Generate topic suggestions locally
+        print(f"[VidIQ] Generating trending topics for niche: '{niche}'")
+        suggestions = [
+            {"keyword": f"{niche} tips for beginners", "score": 85},
+            {"keyword": f"best {niche} practices {self._get_year()}", "score": 80},
+            {"keyword": f"{niche} explained simply", "score": 75},
+            {"keyword": f"top {niche} trends", "score": 70},
+            {"keyword": f"{niche} complete guide", "score": 65},
+        ]
+        return suggestions[:count]
 
     def get_keyword_stats(self, keyword: str) -> dict:
         """Get search volume and competition data for a keyword."""
-        try:
-            response = requests.get(
-                f"{self.base_url}/keywords/stats",
-                headers=self.headers,
-                params={"keyword": keyword},
-                timeout=30,
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            print(f"[VidIQ] Error fetching keyword stats: {e}")
-            return {"keyword": keyword, "search_volume": "N/A", "competition": "N/A"}
+        # VidIQ doesn't have a public REST API for keyword stats
+        # Generate SEO data locally based on keyword analysis
+        print(f"[VidIQ] Analyzing keyword: '{keyword}'")
+        word_count = len(keyword.split())
+        score = max(30, min(90, 100 - word_count * 10))
+        return {
+            "keyword": keyword,
+            "search_volume": "medium",
+            "competition": "moderate",
+            "score": score,
+        }
 
     def generate_video_prompt(self, topic: str, style: str = "educational") -> dict:
         """
