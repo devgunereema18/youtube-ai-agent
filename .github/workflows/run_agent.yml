@@ -1,7 +1,6 @@
 name: AI Video Agent - Create & Upload Video
 
 on:
-  # Run manually from GitHub Actions tab
   workflow_dispatch:
     inputs:
       topic:
@@ -32,10 +31,6 @@ on:
         required: false
         default: 'technology'
 
-  # Optional: Run on schedule (uncomment to auto-post daily)
-  # schedule:
-  #   - cron: '0 9 * * *'  # Every day at 9:00 AM UTC
-
 jobs:
   create-video:
     runs-on: ubuntu-latest
@@ -54,24 +49,36 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Create .env file from secrets
+        env:
+          VIDIQ_API_KEY: ${{ secrets.VIDIQ_API_KEY }}
+          HEYGEN_API_KEY: ${{ secrets.HEYGEN_API_KEY }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          HEYGEN_AVATAR_ID: ${{ secrets.HEYGEN_AVATAR_ID }}
+          HEYGEN_VOICE_ID: ${{ secrets.HEYGEN_VOICE_ID }}
+          INPUT_PRIVACY: ${{ github.event.inputs.privacy }}
         run: |
-          cat << EOF > .env
-          VIDIQ_API_KEY=${{ secrets.VIDIQ_API_KEY }}
-          HEYGEN_API_KEY=${{ secrets.HEYGEN_API_KEY }}
-          YOUTUBE_CLIENT_ID=${{ secrets.YOUTUBE_CLIENT_ID }}
-          YOUTUBE_CLIENT_SECRET=${{ secrets.YOUTUBE_CLIENT_SECRET }}
-          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-          HEYGEN_AVATAR_ID=${{ secrets.HEYGEN_AVATAR_ID || 'default' }}
-          HEYGEN_VOICE_ID=${{ secrets.HEYGEN_VOICE_ID || 'default' }}
-          YOUTUBE_CATEGORY_ID=22
-          YOUTUBE_DEFAULT_PRIVACY=${{ github.event.inputs.privacy }}
-          EOF
+          echo "VIDIQ_API_KEY=${VIDIQ_API_KEY}" > .env
+          echo "HEYGEN_API_KEY=${HEYGEN_API_KEY}" >> .env
+          echo "YOUTUBE_CLIENT_ID=${YOUTUBE_CLIENT_ID}" >> .env
+          echo "YOUTUBE_CLIENT_SECRET=${YOUTUBE_CLIENT_SECRET}" >> .env
+          echo "OPENAI_API_KEY=${OPENAI_API_KEY}" >> .env
+          echo "HEYGEN_AVATAR_ID=${HEYGEN_AVATAR_ID:-default}" >> .env
+          echo "HEYGEN_VOICE_ID=${HEYGEN_VOICE_ID:-default}" >> .env
+          echo "YOUTUBE_CATEGORY_ID=22" >> .env
+          echo "YOUTUBE_DEFAULT_PRIVACY=${INPUT_PRIVACY:-private}" >> .env
 
       - name: Create YouTube token from secret
         env:
-          YOUTUBE_TOKEN: ${{ secrets.YOUTUBE_TOKEN_JSON }}
-        if: env.YOUTUBE_TOKEN != ''
-        run: echo '${{ secrets.YOUTUBE_TOKEN_JSON }}' > youtube_token.json
+          YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON }}
+        run: |
+          if [ -n "${YOUTUBE_TOKEN_JSON}" ]; then
+            echo "${YOUTUBE_TOKEN_JSON}" > youtube_token.json
+            echo "YouTube token file created."
+          else
+            echo "No YouTube token secret found. Skipping."
+          fi
 
       - name: Validate configuration
         run: python main.py --validate
@@ -79,10 +86,10 @@ jobs:
       - name: Run AI Video Agent Pipeline
         run: |
           python main.py \
-            --topic "${{ github.event.inputs.topic || 'AI Technology Trends' }}" \
-            --style "${{ github.event.inputs.style || 'educational' }}" \
-            --niche "${{ github.event.inputs.niche || 'technology' }}" \
-            --privacy "${{ github.event.inputs.privacy || 'private' }}"
+            --topic "${{ github.event.inputs.topic }}" \
+            --style "${{ github.event.inputs.style }}" \
+            --niche "${{ github.event.inputs.niche }}" \
+            --privacy "${{ github.event.inputs.privacy }}"
 
       - name: Upload pipeline results
         if: always()
